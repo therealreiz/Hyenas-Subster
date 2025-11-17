@@ -24,15 +24,17 @@ body {
 /* CONTENITORE PRINCIPALE */
 .main-container {
   width: 100%;
-  max-width: 360px; /* metà della metà */
+  max-width: 360px;
   margin: auto;
   padding: 10px;
+  padding-bottom: 60px; /* spazio per logo Instagram fisso */
   text-align: center;
+  box-sizing: border-box; /* importante per il padding su mobile */
 }
 
 /* LOGO SQUADRA */
 .logo {
-  width: 30px; /* più piccolo */
+  width: 30px;
   margin: 0 auto 4px auto;
   display: block;
 }
@@ -58,6 +60,9 @@ body {
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
   transition: transform 0.2s ease;
   text-align: center;
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box; /* rispetta padding e margini */
 }
 
 .card:hover {
@@ -102,7 +107,7 @@ select {
 
 /* INPUT NOME GIOCATORE - MINIMI */
 input.player-name {
-  width: 12.5%; /* metà della metà della metà */
+  width: 12.5%;
   max-width: 75px;
   margin: 3px auto 7px auto;
 }
@@ -160,4 +165,12 @@ button.secondary:hover {
 .instagram-fixed:hover {
   opacity: 1;
   transform: scale(1.05);
+}
+
+/* RESPONSIVE MOBILE: evita card attaccate ai bordi */
+@media (max-width: 400px) {
+  .main-container {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
 }
