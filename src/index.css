@@ -5,11 +5,16 @@
 /* FONT */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
 
+/* BODY E CONTENITORE PRINCIPALE */
 body {
   font-family: "Inter", sans-serif;
   margin: 0;
   padding: 0;
   color: white;
+
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* importante per footer sempre in fondo */
 
   /* SFONDO */
   background-image: url("/field.jpg");
@@ -23,6 +28,7 @@ body {
 
 /* CONTENITORE PRINCIPALE */
 .main-container {
+  flex: 1; /* prende tutto lo spazio disponibile sopra il footer */
   width: 100%;
   max-width: 360px;
   margin: auto;
@@ -165,6 +171,18 @@ button.secondary:hover {
 .instagram-fixed:hover {
   opacity: 1;
   transform: scale(1.05);
+}
+
+/* FOOTER SEMPRE IN FONDO */
+footer.footer {
+  position: fixed; /* lo blocca */
+  bottom: 0; /* in basso */
+  left: 0;
+  width: 100%;
+  text-align: center;
+  padding: 6px 0;
+  font-size: 10px;
+  z-index: 10000; /* sopra tutto */
 }
 
 /* RESPONSIVE MOBILE: evita card attaccate ai bordi */
