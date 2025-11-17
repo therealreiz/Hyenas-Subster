@@ -15,7 +15,6 @@ interface Evento {
 }
 
 export default function HyenasSimulator() {
-  // Portiere fisso
   const initialTitolari: Giocatore[] = [
     { nome: "", ruolo: "Portiere" },
     { nome: "", ruolo: "Difensore" },
@@ -33,10 +32,8 @@ export default function HyenasSimulator() {
 
   const [durata, setDurata] = useState<number | "">("");
   const [intervallo, setIntervallo] = useState<number | "">("");
-
   const [titolari, setTitolari] = useState<Giocatore[]>(initialTitolari);
   const [panchina, setPanchina] = useState<Giocatore[]>(initialPanchina);
-
   const [eventi, setEventi] = useState<Evento[]>([]);
   const [attivo, setAttivo] = useState(false);
 
@@ -61,7 +58,6 @@ export default function HyenasSimulator() {
     }
 
     const eventiTemp: Evento[] = [];
-
     const ruoli: Ruolo[] = ["Difensore", "Laterale SX", "Laterale DX", "Pivot"];
 
     const rotazione: Record<Ruolo, Giocatore[]> = {
@@ -83,7 +79,6 @@ export default function HyenasSimulator() {
     });
 
     let indexRuolo = 0;
-
     minuti.forEach((minuto) => {
       const ruolo = ruoli[indexRuolo];
       const lista = rotazione[ruolo];
@@ -101,7 +96,6 @@ export default function HyenasSimulator() {
       });
 
       lista.push(lista.shift()!);
-
       indexRuolo = (indexRuolo + 1) % ruoli.length;
     });
 
@@ -110,7 +104,7 @@ export default function HyenasSimulator() {
   };
 
   return (
-    <>
+    <div className="main-container">
       {/* LOGO INSTAGRAM */}
       <a
         href="https://instagram.com/hyenas_infinity"
@@ -120,16 +114,15 @@ export default function HyenasSimulator() {
         <img src="/instagram.png" className="instagram-fixed" />
       </a>
 
-      {/* HEADER CON LOGO */}
+      {/* HEADER */}
       <div className="header-title">
         <img src="/logo.png" className="logo" />
         <h1 className="main-title">Hyenas FC</h1>
       </div>
 
-      {/* PARAMETRI PARTITA */}
+      {/* PARAMETRI */}
       <div className="card">
         <h2>Parametri partita</h2>
-
         <input
           type="number"
           placeholder="Durata totale (minuti)"
@@ -138,7 +131,6 @@ export default function HyenasSimulator() {
             setDurata(e.target.value === "" ? "" : Number(e.target.value))
           }
         />
-
         <input
           type="number"
           step="0.1"
@@ -174,7 +166,7 @@ export default function HyenasSimulator() {
         <h2>Panchina</h2>
         {panchina.map((p, i) => (
           <div key={i}>
-            <label>{p.ruolo}</label>
+            <label>Nome</label>
             <input
               type="text"
               value={p.nome}
@@ -184,6 +176,20 @@ export default function HyenasSimulator() {
                 setPanchina(temp);
               }}
             />
+            <label>Ruolo</label>
+            <select
+              value={p.ruolo}
+              onChange={(e) => {
+                const temp = [...panchina];
+                temp[i].ruolo = e.target.value as Ruolo;
+                setPanchina(temp);
+              }}
+            >
+              <option value="Difensore">Difensore</option>
+              <option value="Laterale SX">Laterale SX</option>
+              <option value="Laterale DX">Laterale DX</option>
+              <option value="Pivot">Pivot</option>
+            </select>
             <button
               className="secondary"
               onClick={() =>
@@ -217,7 +223,7 @@ export default function HyenasSimulator() {
         <div className="card">
           <h2>Rotazione</h2>
           {eventi.map((e, i) => (
-            <div key={i}>
+            <div key={i} className="sostituzione">
               <strong>{e.minuto}'</strong> — {e.out} → {e.in} ({e.ruolo})
             </div>
           ))}
@@ -226,10 +232,8 @@ export default function HyenasSimulator() {
 
       {/* FOOTER */}
       <footer className="footer">
-        <p className="text-xs text-center mt-4">
-          © 2025 Hyenas FC. Tutti i diritti riservati.
-        </p>
+        <p>© 2025 Hyenas FC. Tutti i diritti riservati.</p>
       </footer>
-    </>
+    </div>
   );
 }
