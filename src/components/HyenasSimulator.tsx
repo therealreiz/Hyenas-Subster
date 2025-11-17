@@ -7,7 +7,7 @@ interface Giocatore {
   ruolo: Ruolo;
 }
 
-interface EventoSostituzione {
+interface Evento {
   minuto: number;
   out: string;
   in: string;
@@ -15,6 +15,7 @@ interface EventoSostituzione {
 }
 
 export default function HyenasSimulator() {
+  // Portiere fisso
   const initialTitolari: Giocatore[] = [
     { nome: "", ruolo: "Portiere" },
     { nome: "", ruolo: "Difensore" },
@@ -25,98 +26,95 @@ export default function HyenasSimulator() {
 
   const initialPanchina: Giocatore[] = [
     { nome: "", ruolo: "Difensore" },
-    { nome: "", ruolo: "Laterale DX" },
     { nome: "", ruolo: "Laterale SX" },
+    { nome: "", ruolo: "Laterale DX" },
+    { nome: "", ruolo: "Pivot" },
   ];
 
   const [durata, setDurata] = useState<number | "">("");
-  const [numCambi, setNumCambi] = useState<number | "">("");
-  const [gap, setGap] = useState<number | "">("");
+  const [intervallo, setIntervallo] = useState<number | "">("");
 
   const [titolari, setTitolari] = useState<Giocatore[]>(initialTitolari);
   const [panchina, setPanchina] = useState<Giocatore[]>(initialPanchina);
-  const [eventi, setEventi] = useState<EventoSostituzione[]>([]);
-  const [simulazioneAvviata, setSimulazioneAvviata] = useState(false);
 
-  const aggiungiPanchinaro = () =>
-    setPanchina((prev) => [...prev, { nome: "", ruolo: "Difensore" }]);
+  const [eventi, setEventi] = useState<Evento[]>([]);
+  const [attivo, setAttivo] = useState(false);
 
-  const azzeraTutto = () => {
+  const azzera = () => {
     setDurata("");
-    setNumCambi("");
-    setGap("");
+    setIntervallo("");
     setTitolari(initialTitolari);
     setPanchina(initialPanchina);
     setEventi([]);
-    setSimulazioneAvviata(false);
+    setAttivo(false);
   };
 
-  const generaSostituzioni = () => {
-    if (!durata || !numCambi) return;
+  const genera = () => {
+    if (!durata || !intervallo) return;
 
     const durataN = Number(durata);
-    const numCambiN = Number(numCambi);
-    const gapN = Number(gap) || 0;
+    const intervalloN = Number(intervallo);
 
-    const eventiTemp: EventoSostituzione[] = [];
-    const minutiUsati: number[] = [];
+    // Calcolo minuti dei cambi
+    const minuti: number[] = [];
+    for (let m = intervalloN; m <= durataN; m += intervalloN) {
+      minuti.push(Number(m.toFixed(2)));
+    }
 
-    let titolariTemp = [...titolari];
-    let panchinaTemp = [...panchina];
+    const eventiTemp: Evento[] = [];
 
-    for (let i = 0; i < numCambiN; i++) {
-      let minuto: number | null = null;
-      let tentativi = 0;
+    // Ruoli di movimento
+    const ruoli: Ruolo[] = ["Difensore", "Laterale SX", "Laterale DX", "Pivot"];
 
-      while (minuto === null && tentativi < 200) {
-        tentativi++;
-        const cand = Math.floor(Math.random() * durataN) + 1;
+    // Rotazione per ruolo
+    const rotazione: Record<Ruolo, Giocatore[]> = {
+      Difensore: [],
+      "Laterale SX": [],
+      "Laterale DX": [],
+      Pivot: [],
+      Portiere: [], // non usato
+    };
 
-        const vicino = minutiUsati.some((m) => Math.abs(m - cand) < gapN);
-        if (!vicino) minuto = cand;
-      }
+    // Inserisco titolari + panchina
+    [...titolari, ...panchina].forEach((g) => {
+      if (g.ruolo !== "Portiere") rotazione[g.ruolo].push(g);
+    });
 
-      if (minuto === null) continue;
+    // Ordine: titolare prima
+    ruoli.forEach((r) => {
+      const tit = titolari.find((t) => t.ruolo === r);
+      const altri = rotazione[r].filter((p) => p.nome !== tit?.nome);
+      rotazione[r] = [tit!, ...altri];
+    });
 
-      minutiUsati.push(minuto);
+    // Rotazione circolare: cambia 1 giocatore per intervallo
+    let indexRuolo = 0; // ruolo da cambiare al turno corrente
 
-      const ruoliPossibili: Ruolo[] = [
-        "Difensore",
-        "Laterale SX",
-        "Laterale DX",
-        "Pivot",
-      ];
+    minuti.forEach((minuto) => {
+      const ruolo = ruoli[indexRuolo];
+      const lista = rotazione[ruolo];
 
-      const ruoliDisponibili = ruoliPossibili.filter(
-        (r) =>
-          titolariTemp.some((t) => t.ruolo === r) &&
-          panchinaTemp.some((p) => p.ruolo === r)
-      );
+      if (lista.length < 2) return;
 
-      if (ruoliDisponibili.length === 0) continue;
-
-      const ruolo =
-        ruoliDisponibili[Math.floor(Math.random() * ruoliDisponibili.length)];
-      const titIdx = titolariTemp.findIndex((t) => t.ruolo === ruolo);
-      const panIdx = panchinaTemp.findIndex((p) => p.ruolo === ruolo);
-
-      const outG = titolariTemp[titIdx];
-      const inG = panchinaTemp[panIdx];
+      const out = lista[0];
+      const inn = lista[1];
 
       eventiTemp.push({
         minuto,
-        out: outG.nome || "(vuoto)",
-        in: inG.nome || "(vuoto)",
-        ruolo,
+        out: out.nome || "(vuoto)",
+        in: inn.nome || "(vuoto)",
+        ruolo: ruolo,
       });
 
-      titolariTemp[titIdx] = { ...inG };
-      panchinaTemp[panIdx] = { ...outG };
-    }
+      // RUOTA: esce primo entra secondo
+      lista.push(lista.shift()!);
 
-    eventiTemp.sort((a, b) => a.minuto - b.minuto);
+      // prossimo ruolo
+      indexRuolo = (indexRuolo + 1) % ruoli.length;
+    });
+
     setEventi(eventiTemp);
-    setSimulazioneAvviata(true);
+    setAttivo(true);
   };
 
   return (
@@ -130,18 +128,19 @@ export default function HyenasSimulator() {
         <img src="/instagram.png" className="instagram-fixed" />
       </a>
 
+      {/* HEADER CON LOGO */}
       <div className="header-title">
         <img src="/logo.png" className="logo" />
-        <h1 className="main-title">Hyenas FC – Simulatore</h1>
+        <h1 className="main-title">Hyenas FC</h1>
       </div>
 
-      {/* PARAMETRI */}
+      {/* PARAMETRI PARTITA */}
       <div className="card">
         <h2>Parametri partita</h2>
 
         <input
           type="number"
-          placeholder="Durata in minuti"
+          placeholder="Durata totale (minuti)"
           value={durata}
           onChange={(e) =>
             setDurata(e.target.value === "" ? "" : Number(e.target.value))
@@ -150,19 +149,11 @@ export default function HyenasSimulator() {
 
         <input
           type="number"
-          placeholder="Numero sostituzioni"
-          value={numCambi}
+          step="0.1"
+          placeholder="Intervallo cambi (es: 2.5)"
+          value={intervallo}
           onChange={(e) =>
-            setNumCambi(e.target.value === "" ? "" : Number(e.target.value))
-          }
-        />
-
-        <input
-          type="number"
-          placeholder="Gap minimo (minuti)"
-          value={gap}
-          onChange={(e) =>
-            setGap(e.target.value === "" ? "" : Number(e.target.value))
+            setIntervallo(e.target.value === "" ? "" : Number(e.target.value))
           }
         />
       </div>
@@ -175,7 +166,6 @@ export default function HyenasSimulator() {
             <label>{t.ruolo}</label>
             <input
               type="text"
-              placeholder="Nome giocatore"
               value={t.nome}
               onChange={(e) => {
                 const temp = [...titolari];
@@ -192,9 +182,9 @@ export default function HyenasSimulator() {
         <h2>Panchina</h2>
         {panchina.map((p, i) => (
           <div key={i}>
+            <label>{p.ruolo}</label>
             <input
               type="text"
-              placeholder="Nome"
               value={p.nome}
               onChange={(e) => {
                 const temp = [...panchina];
@@ -202,56 +192,35 @@ export default function HyenasSimulator() {
                 setPanchina(temp);
               }}
             />
-
-            <select
-              value={p.ruolo}
-              onChange={(e) => {
-                const temp = [...panchina];
-                temp[i].ruolo = e.target.value as Ruolo;
-                setPanchina(temp);
-              }}
-            >
-              <option>Difensore</option>
-              <option>Laterale SX</option>
-              <option>Laterale DX</option>
-              <option>Pivot</option>
-            </select>
           </div>
         ))}
 
-        <button onClick={aggiungiPanchinaro}>Aggiungi panchinaro</button>
         <button
-          className="secondary"
-          onClick={() => setPanchina(initialPanchina)}
+          onClick={() =>
+            setPanchina((prev) => [...prev, { nome: "", ruolo: "Difensore" }])
+          }
         >
-          Ripristina panchina
+          Aggiungi panchinaro
         </button>
       </div>
 
       {/* CONTROLLI */}
       <div className="card">
-        <h2>Controlli</h2>
-
-        <button onClick={generaSostituzioni}>Avvia simulazione</button>
-        <button className="secondary" onClick={azzeraTutto}>
-          Azzera tutto
+        <button onClick={genera}>Genera rotazione</button>
+        <button className="secondary" onClick={azzera}>
+          Azzera
         </button>
       </div>
 
-      {/* RISULTATI — SOLO SE LA SIMULAZIONE È PARTITA */}
-      {simulazioneAvviata && (
+      {/* RISULTATI */}
+      {attivo && (
         <div className="card">
-          <h2>Risultato</h2>
-
-          {eventi.length === 0 ? (
-            <p>Nessuna sostituzione generata.</p>
-          ) : (
-            eventi.map((e, i) => (
-              <div key={i} className="sostituzione">
-                <strong>{e.minuto}'</strong> — {e.out} → {e.in} ({e.ruolo})
-              </div>
-            ))
-          )}
+          <h2>Rotazione</h2>
+          {eventi.map((e, i) => (
+            <div key={i}>
+              <strong>{e.minuto}'</strong> — {e.out} → {e.in} ({e.ruolo})
+            </div>
+          ))}
         </div>
       )}
     </>
