@@ -55,7 +55,6 @@ export default function HyenasSimulator() {
     const durataN = Number(durata);
     const intervalloN = Number(intervallo);
 
-    // Calcolo minuti dei cambi
     const minuti: number[] = [];
     for (let m = intervalloN; m <= durataN; m += intervalloN) {
       minuti.push(Number(m.toFixed(2)));
@@ -63,32 +62,27 @@ export default function HyenasSimulator() {
 
     const eventiTemp: Evento[] = [];
 
-    // Ruoli di movimento
     const ruoli: Ruolo[] = ["Difensore", "Laterale SX", "Laterale DX", "Pivot"];
 
-    // Rotazione per ruolo
     const rotazione: Record<Ruolo, Giocatore[]> = {
       Difensore: [],
       "Laterale SX": [],
       "Laterale DX": [],
       Pivot: [],
-      Portiere: [], // non usato
+      Portiere: [],
     };
 
-    // Inserisco titolari + panchina
     [...titolari, ...panchina].forEach((g) => {
       if (g.ruolo !== "Portiere") rotazione[g.ruolo].push(g);
     });
 
-    // Ordine: titolare prima
     ruoli.forEach((r) => {
       const tit = titolari.find((t) => t.ruolo === r);
       const altri = rotazione[r].filter((p) => p.nome !== tit?.nome);
       rotazione[r] = [tit!, ...altri];
     });
 
-    // Rotazione circolare: cambia 1 giocatore per intervallo
-    let indexRuolo = 0; // ruolo da cambiare al turno corrente
+    let indexRuolo = 0;
 
     minuti.forEach((minuto) => {
       const ruolo = ruoli[indexRuolo];
@@ -106,10 +100,8 @@ export default function HyenasSimulator() {
         ruolo: ruolo,
       });
 
-      // RUOTA: esce primo entra secondo
       lista.push(lista.shift()!);
 
-      // prossimo ruolo
       indexRuolo = (indexRuolo + 1) % ruoli.length;
     });
 
@@ -192,6 +184,14 @@ export default function HyenasSimulator() {
                 setPanchina(temp);
               }}
             />
+            <button
+              className="secondary"
+              onClick={() =>
+                setPanchina((prev) => prev.filter((_, idx) => idx !== i))
+              }
+            >
+              Rimuovi
+            </button>
           </div>
         ))}
 
@@ -223,6 +223,13 @@ export default function HyenasSimulator() {
           ))}
         </div>
       )}
+
+      {/* FOOTER */}
+      <footer className="footer">
+        <p className="text-xs text-center mt-4">
+          © 2025 Hyenas FC. Tutti i diritti riservati.
+        </p>
+      </footer>
     </>
   );
 }
